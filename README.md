@@ -1,4 +1,4 @@
-# 🛡️ Threat Detection Hunt Pack (Healthcare-Focused)
+# 🛡️ Threat Detection Hunt Pack (Healthcare Focused)
 
 This repository showcases custom detection logic and behavioral hunt queries I’ve developed for **Microsoft Defender (KQL)** and **CrowdStrike LogScale**, tailored for the healthcare sector.
 
@@ -18,13 +18,13 @@ Each detection aligns with **MITRE ATT&CK**, emphasizes **noise reduction and ba
 
 ## 🧩 Structure
 
-<a href="https://github.com/AJ-Jeffreys/Threat-Detection-Hunt-Pack/blob/main/hunts" target="_blank">hunts/</a>           Raw KQL detection queries
+<a href="https://github.com/AJ-Jeffreys/Threat-Detection-Hunt-Pack/blob/main/hunts" target="_blank">hunts/</a>       -->    Raw KQL detection queries
 
-playbooks/       Markdown triage guides
+playbooks/     -->  Markdown triage guides
 
-visuals/         Flowcharts, screenshots, diagrams
+visuals/     -->    Flowcharts, screenshots, diagrams
 
-metadata/        MITRE mappings and version info
+metadata/    -->    MITRE mappings and version info
 
 ---
 
