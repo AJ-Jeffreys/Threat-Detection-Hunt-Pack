@@ -1,0 +1,8 @@
+id: "01"
+name: OfficeToScript_EncodedCommand
+tactics: [Execution]
+techniques: [T1059.001, T1204.002, T1218]
+data_source: DeviceProcessEvents
+status: analytic
+severity: High
+author: AJ Jeffreys

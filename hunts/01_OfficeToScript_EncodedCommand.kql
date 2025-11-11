@@ -1,0 +1,21 @@
+// Detection: Office → Script Encoded/Obfuscated Commands
+// Author: AJ Jeffreys
+// MITRE: T1059.001, T1204.002, T1218
+// Source: DeviceProcessEvents
+
+let SusParent = dynamic(["winword.exe","excel.exe","powerpnt.exe","outlook.exe","teams.exe"]);
+let SusChild  = dynamic(["powershell.exe","wscript.exe","cscript.exe","cmd.exe","mshta.exe","rundll32.exe","regsvr32.exe"]);
+let SusCmd    = dynamic(["-EncodedCommand","-Enc","-e","IEX","FromBase64String",
+                         "DownloadString","Invoke-WebRequest","Start-BitsTransfer","DownloadFile"]);
+let AllowNames = dynamic(["jdoeadmin","psmithadmin","abcadmin","123admin","xyzadmin"]);
+
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where InitiatingProcessFileName in~ (SusParent)   // parent = Office
+| where FileName in~ (SusChild)                     // child = script/LOLBIN
+| where ProcessCommandLine has_any (SusCmd)
+| where not(InitiatingProcessAccountName in~ (AllowNames))
+| project Timestamp, DeviceName, AccountName, ProcessId, FileName, InitiatingProcessId,
+          InitiatingProcessFileName, ProcessCommandLine, InitiatingProcessCommandLine,
+          InitiatingProcessAccountName, SHA1, SHA256
+| order by Timestamp desc
