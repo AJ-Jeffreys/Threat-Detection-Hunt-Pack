@@ -10,7 +10,7 @@ Each detection aligns with **MITRE ATT&CK**, emphasizes **noise reduction and ba
 
 | Hunt Name | ATT&CK Techniques | Category | Description |
 |------------|------------------|-----------|--------------|
-| Office to Script Encoded Command | T1059.001, T1204.002 | Execution | Detects Office apps spawning scripting engines with encoded payloads |
+| <a href="https://github.com/AJ-Jeffreys/Threat-Detection-Hunt-Pack/blob/main/hunts/01_OfficeToScript_EncodedCommand.kql" target="_blank">Office to Script Encoded Command/</a>  | T1059.001, T1204.002 | Execution | Detects Office apps spawning scripting engines with encoded payloads |
 | Recon Burst from Risky Parents | T1016, T1033, T1087 | Discovery | Identifies multiple recon commands within short time windows |
  | | | |
 
