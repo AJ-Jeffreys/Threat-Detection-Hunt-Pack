@@ -18,7 +18,7 @@ Each detection aligns with **MITRE ATT&CK**, emphasizes **noise reduction and ba
 
 ## 🧩 Structure
 
-hunts/           Raw KQL detection queries
+<a href="https://github.com/AJ-Jeffreys/Threat-Detection-Hunt-Pack/blob/main/hunts" target="_blank">hunts/</a>/           Raw KQL detection queries
 
 playbooks/       Markdown triage guides
 
