@@ -20,11 +20,10 @@ Each detection aligns with **MITRE ATT&CK**, emphasizes **noise reduction and ba
 
 <a href="https://github.com/AJ-Jeffreys/Threat-Detection-Hunt-Pack/blob/main/hunts" target="_blank">hunts/</a>       -->    Raw KQL detection queries
 
-playbooks/     -->  Markdown triage guides
+<a href="https://github.com/AJ-Jeffreys/Threat-Detection-Hunt-Pack/blob/main/playbooks" target="_blank">playbooks/</a>    -->  Markdown triage guides
 
-visuals/     -->    Flowcharts, screenshots, diagrams
+<a href="https://github.com/AJ-Jeffreys/Threat-Detection-Hunt-Pack/blob/main/metadata" target="_blank">metadata/</a>     -->    MITRE mappings and version info
 
-metadata/    -->    MITRE mappings and version info
 
 ---
 
