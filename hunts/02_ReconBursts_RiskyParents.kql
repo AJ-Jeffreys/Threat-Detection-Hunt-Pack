@@ -1,0 +1,30 @@
+let lookback = 2h;
+let recon = dynamic(["whoami.exe","ipconfig.exe","quser.exe","net.exe","net1.exe"]);
+let riskyParents = dynamic(["powershell.exe","wscript.exe","cscript.exe","mshta.exe","rundll32.exe",
+"WINWORD.EXE","EXCEL.EXE","POWERPNT.EXE","outlook.exe","chrome.exe","msedge.exe"]);
+let AllowList = dynamic(["abcadmin", "xyzadmin", "jdoeadmin"]);
+// Query Starts Here:
+//
+DeviceProcessEvents
+| where Timestamp > ago(lookback)
+| where FileName in~ (recon)
+| where FileName !~ "net.exe" or ProcessCommandLine has_any (" user"," group"," view")
+| where InitiatingProcessFileName in~ (riskyParents)
+| where not (InitiatingProcessAccountName in~ (AllowList))
+// aggregate per device/account per 1h bucket
+| summarize
+    cnt = count(),
+    cmds = make_set(FileName, 5),
+    parents = make_set(InitiatingProcessFileName, 5),
+    sample = arg_max(Timestamp, ReportId, ProcessCommandLine)
+  by DeviceId, DeviceName, AccountName, bin(Timestamp, 1h)
+// threshold for "burst"
+| where cnt >= 3
+// REQUIRED columns for detections: Timestamp, DeviceId, ReportId
+| project
+    Timestamp,                        
+    DeviceId,
+    ReportId,       
+    DeviceName, AccountName, cnt, cmds, parents,
+    ProcessCommandLine
+| order by Timestamp desc

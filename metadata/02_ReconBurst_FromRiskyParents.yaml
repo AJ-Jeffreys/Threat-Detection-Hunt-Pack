@@ -1,0 +1,36 @@
+id: "02"
+name: ReconBurst_FromRiskyParents
+description: >
+  Detects bursts of discovery commands (whoami, ipconfig, quser, net, net1) within
+  a short time window when launched from risky parent processes such as script engines,
+  Office applications, or web browsers. Indicates potential hands-on-keyboard post-compromise recon.
+tactics:
+  - Discovery
+techniques:
+  - T1033    # Account Discovery (whoami, quser)
+  - T1016    # System Network Configuration Discovery (ipconfig)
+  - T1087    # Account Discovery (net user, net group)
+  - T1082    # System Information Discovery
+data_source: DeviceProcessEvents
+status: analytic
+severity: MediumHigh
+author: AJ Jeffreys
+queries:
+  - file: hunts/02_ReconBurst_FromRiskyParents.kql
+    lookback: 2h
+    frequency: 15m
+    threshold:
+      field: cnt
+      operator: ">="
+      value: 3
+notes:
+  - Requires baselining of admin/service accounts and management hosts.
+  - Consider separate thresholds for admin vs non-admin users.
+  - Good candidate for scheduled analytic or custom detection with aggregation.
+tags:
+  - threat-hunting
+  - kql
+  - microsoft-defender
+  - recon
+  - discovery
+  - healthcare
