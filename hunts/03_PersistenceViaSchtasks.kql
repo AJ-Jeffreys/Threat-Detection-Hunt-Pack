@@ -1,0 +1,32 @@
+// Detection: Persistence via Scheduled Task Creation
+// Author: AJ Jeffreys
+// MITRE: T1053.005
+// Tactic: Persistence, Privilege Escalation
+// Source: DeviceProcessEvents
+// Severity: High
+// Status: Analytic
+// Notes: Catches schtasks.exe invoked with /create or /change by script engines,
+//        Office apps, or LOLBINs. Scheduled task persistence survives reboots and
+//        blends with legitimate IT automation. Used by ALPHV, LockBit, and Rhysida
+//        in healthcare ransomware deployment chains.
+
+let RiskyParents = dynamic([
+    "powershell.exe","wscript.exe","cscript.exe","cmd.exe","mshta.exe",
+    "rundll32.exe","regsvr32.exe","winword.exe","excel.exe","powerpnt.exe",
+    "outlook.exe","teams.exe","chrome.exe","msedge.exe"
+]);
+// Replace AllowList with privileged admin account names in your environment
+let AllowList = dynamic(["replace-with-admin1","replace-with-admin2"]);
+
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where FileName =~ "schtasks.exe"
+| where InitiatingProcessFileName in~ (RiskyParents)    // unusual parent spawning schtasks
+| where ProcessCommandLine has_any ("/create","/change")
+| where not(InitiatingProcessAccountName in~ (AllowList))
+| project
+    Timestamp, DeviceName, AccountName,
+    InitiatingProcessFileName, ProcessCommandLine,
+    InitiatingProcessCommandLine, InitiatingProcessAccountName,
+    SHA1, SHA256
+| order by Timestamp desc

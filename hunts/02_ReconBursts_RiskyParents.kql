@@ -1,30 +1,40 @@
+// Detection: Reconnaissance Burst from Risky Parent Processes
+// Author: AJ Jeffreys
+// MITRE: T1016, T1033, T1087
+// Tactic: Discovery
+// Source: DeviceProcessEvents
+// Severity: Medium
+// Status: Hunting
+// Notes: Identifies 3+ recon commands within a 1-hour window from a suspicious parent.
+//        Burst pattern separates attacker recon from incidental admin activity.
+//        Common post-exploitation behavior before lateral movement to clinical systems.
+
 let lookback = 2h;
 let recon = dynamic(["whoami.exe","ipconfig.exe","quser.exe","net.exe","net1.exe"]);
 let riskyParents = dynamic(["powershell.exe","wscript.exe","cscript.exe","mshta.exe","rundll32.exe",
-"WINWORD.EXE","EXCEL.EXE","POWERPNT.EXE","outlook.exe","chrome.exe","msedge.exe"]);
-let AllowList = dynamic(["abcadmin", "xyzadmin", "jdoeadmin"]);
-// Query Starts Here:
-//
+    "WINWORD.EXE","EXCEL.EXE","POWERPNT.EXE","outlook.exe","chrome.exe","msedge.exe"]);
+// Replace AllowList with privileged admin account names in your environment
+let AllowList = dynamic(["replace-with-admin1","replace-with-admin2"]);
+
 DeviceProcessEvents
 | where Timestamp > ago(lookback)
 | where FileName in~ (recon)
 | where FileName !~ "net.exe" or ProcessCommandLine has_any (" user"," group"," view")
 | where InitiatingProcessFileName in~ (riskyParents)
-| where not (InitiatingProcessAccountName in~ (AllowList))
-// aggregate per device/account per 1h bucket
+| where not(InitiatingProcessAccountName in~ (AllowList))
+// Aggregate per device/account per 1-hour bucket
 | summarize
     cnt = count(),
     cmds = make_set(FileName, 5),
     parents = make_set(InitiatingProcessFileName, 5),
     sample = arg_max(Timestamp, ReportId, ProcessCommandLine)
   by DeviceId, DeviceName, AccountName, bin(Timestamp, 1h)
-// threshold for "burst"
+// Threshold for burst — tune based on your environment baseline
 | where cnt >= 3
-// REQUIRED columns for detections: Timestamp, DeviceId, ReportId
 | project
-    Timestamp,                        
+    Timestamp,
     DeviceId,
-    ReportId,       
+    ReportId,
     DeviceName, AccountName, cnt, cmds, parents,
     ProcessCommandLine
 | order by Timestamp desc

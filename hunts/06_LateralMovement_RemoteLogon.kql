@@ -1,0 +1,36 @@
+// Detection: Anomalous RDP Lateral Movement
+// Author: AJ Jeffreys
+// MITRE: T1021.001
+// Tactic: Lateral Movement
+// Source: DeviceLogonEvents
+// Severity: Medium
+// Status: Hunting
+// Notes: Identifies remote interactive logons (RDP, LogonType 10) from IPs not on
+//        the known admin/jump host allowlist. Flags accounts authenticating to
+//        multiple systems within a short window. RDP lateral movement is a common
+//        precursor to ransomware deployment in healthcare network environments.
+
+let lookback = 24h;
+// Replace RemoteIPAllowList with known admin workstation IPs and jump host addresses
+let RemoteIPAllowList = dynamic(["replace-with-admin-ip1","replace-with-jumphost-ip"]);
+// Replace AllowList with privileged admin account names in your environment
+let AllowList = dynamic(["replace-with-admin1","replace-with-admin2"]);
+
+DeviceLogonEvents
+| where Timestamp > ago(lookback)
+| where LogonType == 10                              // RemoteInteractive = RDP
+| where ActionType == "LogonSuccess"
+| where not(RemoteIP in (RemoteIPAllowList))         // source not a known admin IP
+| where not(AccountName in~ (AllowList))
+| where RemoteIP != ""
+// Aggregate per account/source IP per hour to catch multi-hop movement
+| summarize
+    LogonCount = count(),
+    TargetDevices = make_set(DeviceName, 10),
+    sample = arg_max(Timestamp, ReportId, ProcessCommandLine)
+  by AccountName, RemoteIP, bin(Timestamp, 1h)
+| where LogonCount >= 2                             // tune threshold for your environment
+| project
+    Timestamp, AccountName, RemoteIP,
+    LogonCount, TargetDevices
+| order by LogonCount desc

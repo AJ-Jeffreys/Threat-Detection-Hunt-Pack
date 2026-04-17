@@ -1,18 +1,25 @@
-// Detection: Office → Script Encoded/Obfuscated Commands
+// Detection: Office to Script Encoded/Obfuscated Commands
 // Author: AJ Jeffreys
 // MITRE: T1059.001, T1204.002, T1218
+// Tactic: Execution
 // Source: DeviceProcessEvents
+// Severity: High
+// Status: Analytic
+// Notes: Detects Office applications spawning scripting engines or LOLBINs with
+//        encoded or obfuscated command arguments. Primary macro malware indicator.
+//        In healthcare, billing and insurance attachments are high-trust phishing lures.
 
 let SusParent = dynamic(["winword.exe","excel.exe","powerpnt.exe","outlook.exe","teams.exe"]);
 let SusChild  = dynamic(["powershell.exe","wscript.exe","cscript.exe","cmd.exe","mshta.exe","rundll32.exe","regsvr32.exe"]);
 let SusCmd    = dynamic(["-EncodedCommand","-Enc","-e","IEX","FromBase64String",
                          "DownloadString","Invoke-WebRequest","Start-BitsTransfer","DownloadFile"]);
-let AllowNames = dynamic(["jdoeadmin","psmithadmin","abcadmin","123admin","xyzadmin"]);
+// Replace AllowNames with privileged admin account names in your environment
+let AllowNames = dynamic(["replace-with-admin1","replace-with-admin2"]);
 
 DeviceProcessEvents
 | where Timestamp > ago(30d)
-| where InitiatingProcessFileName in~ (SusParent)   // parent = Office
-| where FileName in~ (SusChild)                     // child = script/LOLBIN
+| where InitiatingProcessFileName in~ (SusParent)   // parent = Office app
+| where FileName in~ (SusChild)                     // child = script engine or LOLBIN
 | where ProcessCommandLine has_any (SusCmd)
 | where not(InitiatingProcessAccountName in~ (AllowNames))
 | project Timestamp, DeviceName, AccountName, ProcessId, FileName, InitiatingProcessId,

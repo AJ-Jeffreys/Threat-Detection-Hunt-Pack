@@ -1,0 +1,30 @@
+// Detection: Suspicious Windows Service Installation
+// Author: AJ Jeffreys
+// MITRE: T1543.003
+// Tactic: Persistence, Privilege Escalation
+// Source: DeviceProcessEvents
+// Severity: High
+// Status: Analytic
+// Notes: Detects sc.exe creating or configuring services from risky parent processes.
+//        Malware installs services to survive reboots and maintain access during
+//        multi-day dwell periods before ransomware detonation in healthcare environments.
+
+let RiskyParents = dynamic([
+    "powershell.exe","wscript.exe","cscript.exe","cmd.exe","mshta.exe",
+    "winword.exe","excel.exe","powerpnt.exe","outlook.exe","rundll32.exe"
+]);
+// Replace AllowList with privileged admin account names in your environment
+let AllowList = dynamic(["replace-with-admin1","replace-with-admin2"]);
+
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where FileName =~ "sc.exe"
+| where ProcessCommandLine has_any ("create","config","start")
+| where InitiatingProcessFileName in~ (RiskyParents)    // sc.exe called from unusual parent
+| where not(InitiatingProcessAccountName in~ (AllowList))
+| project
+    Timestamp, DeviceName, AccountName,
+    InitiatingProcessFileName, ProcessCommandLine,
+    InitiatingProcessCommandLine, InitiatingProcessAccountName,
+    SHA1, SHA256
+| order by Timestamp desc
