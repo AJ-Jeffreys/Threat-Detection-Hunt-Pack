@@ -1,8 +1,8 @@
 # Threat Detection Hunt Pack (Healthcare Focused)
 
-Custom KQL detections and behavioral hunt queries I've developed for **Microsoft Defender XDR**, built from real-world security operations in a healthcare/critical infrastructure environment.
+Custom KQL detections and behavioral analytics queries I'''ve developed for **Microsoft Defender XDR**, built from real-world SOC operations in a healthcare/critical infrastructure environment.
 
-Each detection maps to MITRE ATT&CK, includes allowlists tuned for healthcare environments, and has a companion triage playbook for rapid analyst response.
+Each detection maps to MITRE ATT&CK, includes allowlists tuned for healthcare environments, and has a companion triage playbook for rapid incident response and alert triage.
 
 ---
 
@@ -24,20 +24,21 @@ Full index with MITRE mappings, data sources, and tuning notes: [DETECTIONS.md](
 ## Repository Structure
 
 ```
-hunts/       KQL detection queries (Defender XDR)
-playbooks/   Markdown triage guides per detection
+hunts/       KQL detection queries (Defender XDR/EDR)
+playbooks/   Markdown alert triage guides per detection
 metadata/    MITRE mappings and version tracking
 ```
 
 ---
 
-## Design Philosophy
+## Detection Engineering Philosophy
 
 Each detection is built to:
 
 - Emphasize **high signal, low noise** with allowlists and environment-specific tuning variables built in
 - Reflect **real attacker patterns** observed in healthcare sector incidents — macro-based initial access, credential theft, and ransomware pre-deployment activity
 - Map cleanly to **MITRE ATT&CK** for integration into threat intelligence and incident response workflows
+- Enable effective **threat hunting** through behavioral analytics rather than simple IOC matching
 
 ---
 
@@ -55,20 +56,21 @@ Each detection is built to:
 
 ---
 
-## Deploying in Your Environment
+## Deploying in Your SIEM/EDR Environment
 
 Before running these queries:
 
 1. Replace allowlist values (labeled `replace-with-admin1`, etc.) with your privileged account names and admin IPs
 2. Adjust lookback windows to match your data volume and alert fatigue tolerance
-3. Test in hunting mode before promoting to analytic rules
+3. Test in threat hunting mode before promoting to analytic rules
+4. Integrate with your existing SOC alert triage workflow
 
-See [DETECTIONS.md](DETECTIONS.md) for per-detection tuning notes.
+See [DETECTIONS.md](DETECTIONS.md) for per-detection tuning notes and threat intelligence context.
 
 ---
 
 ## Author
 
-**AJ Jeffreys** — Security Operations Analyst specializing in threat detection and vulnerability management in healthcare/critical infrastructure.
+**AJ Jeffreys** — Detection Engineer specializing in threat detection, behavioral analytics, and vulnerability management in healthcare/critical infrastructure environments.
 
 [LinkedIn](https://www.linkedin.com/in/ajani-jeffreys/) · [GitHub](https://github.com/AJ-Jeffreys)
