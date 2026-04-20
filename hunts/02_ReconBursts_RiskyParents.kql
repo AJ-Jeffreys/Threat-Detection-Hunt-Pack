@@ -1,40 +1,61 @@
-// Detection: Reconnaissance Burst from Risky Parent Processes
+// Detection: Reconnaissance Burst from Script Host or Productivity App
 // Author: AJ Jeffreys
 // MITRE: T1016, T1033, T1087
-// Tactic: Discovery
+// Tactic: Discovery (TA0007)
 // Source: DeviceProcessEvents
 // Severity: Medium
 // Status: Hunting
-// Notes: Identifies 3+ recon commands within a 1-hour window from a suspicious parent.
-//        Burst pattern separates attacker recon from incidental admin activity.
+// Notes: Identifies recon command bursts (3+ executions, 2+ distinct tools) within a
+//        1-hour window spawned from script hosts, LOLBINs, Office apps, or browsers.
+//        The distinct-count requirement filters out repeated invocations of a single
+//        command (e.g. scripted ipconfig loops) and focuses on attacker-style recon
+//        that enumerates multiple dimensions of the host/account/domain.
 //        Common post-exploitation behavior before lateral movement to clinical systems.
 
-let lookback = 2h;
-let recon = dynamic(["whoami.exe","ipconfig.exe","quser.exe","net.exe","net1.exe"]);
-let riskyParents = dynamic(["powershell.exe","wscript.exe","cscript.exe","mshta.exe","rundll32.exe",
-    "WINWORD.EXE","EXCEL.EXE","POWERPNT.EXE","outlook.exe","chrome.exe","msedge.exe"]);
+let lookback       = 2h;
+let bucket         = 1h;
+let burstThreshold = 3;
+let distinctMin    = 2;
+let reconBins = dynamic([
+    "whoami.exe","ipconfig.exe","quser.exe","hostname.exe",
+    "systeminfo.exe","tasklist.exe","nltest.exe","net.exe","net1.exe"
+]);
+let netBins   = dynamic(["net.exe","net1.exe"]);
+let netReconArgs = dynamic([" user"," group"," view"," localgroup"," session"," accounts"," config"]);
+let riskyParents = dynamic([
+    // script/LOLBin hosts
+    "powershell.exe","pwsh.exe","wscript.exe","cscript.exe","mshta.exe",
+    "rundll32.exe","regsvr32.exe","hh.exe","msbuild.exe",
+    // Office
+    "winword.exe","excel.exe","powerpnt.exe","outlook.exe","onenote.exe",
+    // browsers / reader
+    "chrome.exe","msedge.exe","firefox.exe","acrord32.exe"
+]);
 // Replace AllowList with privileged admin account names in your environment
 let AllowList = dynamic(["replace-with-admin1","replace-with-admin2"]);
 
 DeviceProcessEvents
 | where Timestamp > ago(lookback)
-| where FileName in~ (recon)
-| where FileName !~ "net.exe" or ProcessCommandLine has_any (" user"," group"," view")
+| where FileName in~ (reconBins)
 | where InitiatingProcessFileName in~ (riskyParents)
-| where not(InitiatingProcessAccountName in~ (AllowList))
-// Aggregate per device/account per 1-hour bucket
+| where not(FileName in~ (netBins))
+       or ProcessCommandLine has_any (netReconArgs)
+| where not(AccountName in~ (AllowList))
 | summarize
-    cnt = count(),
-    cmds = make_set(FileName, 5),
-    parents = make_set(InitiatingProcessFileName, 5),
-    sample = arg_max(Timestamp, ReportId, ProcessCommandLine)
-  by DeviceId, DeviceName, AccountName, bin(Timestamp, 1h)
-// Threshold for burst — tune based on your environment baseline
-| where cnt >= 3
+    ReconCount       = count(),
+    DistinctRecon    = dcount(FileName),
+    ReconCommands    = make_set(FileName, 10),
+    ParentProcesses  = make_set(InitiatingProcessFileName, 10),
+    SampleCmdLines   = make_set(ProcessCommandLine, 5),
+    arg_max(Timestamp, ReportId, ProcessCommandLine, InitiatingProcessCommandLine, FolderPath, InitiatingProcessFolderPath)
+    by DeviceId, DeviceName, AccountDomain, AccountName, Bucket = bin(Timestamp, bucket)
+| where ReconCount >= burstThreshold and DistinctRecon >= distinctMin
 | project
-    Timestamp,
-    DeviceId,
-    ReportId,
-    DeviceName, AccountName, cnt, cmds, parents,
-    ProcessCommandLine
+    Timestamp, DeviceId, ReportId,
+    DeviceName, AccountDomain, AccountName,
+    ReconCount, DistinctRecon,
+    ReconCommands, ParentProcesses,
+    ProcessCommandLine, InitiatingProcessCommandLine,
+    FolderPath, InitiatingProcessFolderPath,
+    SampleCmdLines, Bucket
 | order by Timestamp desc
