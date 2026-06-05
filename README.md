@@ -1,6 +1,6 @@
 # Threat Detection Hunt Pack (Healthcare Focused)
 
-Custom KQL detections and behavioral analytics queries I'''ve developed for **Microsoft Defender XDR**, built from real-world SOC operations in a healthcare/critical infrastructure environment.
+Custom KQL detections and behavioral analytics queries I've developed for **Microsoft Defender XDR**, built from real world SOC operations in a healthcare/critical infrastructure environment.
 
 Each detection maps to MITRE ATT&CK, includes allowlists tuned for healthcare environments, and has a companion triage playbook for rapid incident response and alert triage.
 
